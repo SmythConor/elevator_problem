@@ -1,0 +1,11 @@
+Generate random number of elevators as N - Ready
+Start thread pool of size N - Ready
+
+Elevator sleeps
+
+PersonGenerator to generate a random person at random times - Done
+
+Person has random values for destination, arrival and weight - Done
+Person run: notify thread pool and sleep
+Person woken: add to elevator and sleep
+Person arrives: exit
