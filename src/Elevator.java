@@ -39,11 +39,11 @@ class Elevator implements Runnable {
 
 	/**
 	 * Check to see if the person can fit in the elevator
-	 * @param person the person to check
+	 * @param p the person to check
 	 * @return true if the person can fit
 	 */
 	private boolean canFit(Person p) {
-		Double newWeight = currentWeight + (person.getWeight() + person.getLuggageWeight());
+		Double newWeight = currentWeight + (p.getWeight() + p.getLuggageWeight());
 
 		return newWeight < MAX_WEIGHT;
 	}
