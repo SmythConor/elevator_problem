@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * Elevator class for handling the elevator movement etc
  * @author Conor Smyth 12452382 <conor.smyth39@mail.dcu.ie>
- * @author Phil Brennan <@mail.dcu.ie>
+ * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class Elevator implements Runnable {
 	private final Double MAX_WEIGHT = 1320.0;

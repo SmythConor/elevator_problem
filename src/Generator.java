@@ -3,7 +3,7 @@ import java.util.Random;
 /**
  * Generator class for generating values
  * @author Conor Smyth 12452382 <conor.smyth39@mail.dcu.ie>
- * @author Phil Brennan STD_NO <@mail.dcu.ie>
+ * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class Generator {
 	private static final Integer MAX_PERSON = 5000;

@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Main class to drive the program
  * @author Conor Smyth 12452382 <conor.smyth39@mail.dcu.ie>
- * @author Phil Brennan <@mail.dcu.ie>
+ * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class Main {
 	private static Queue<Map<Person, ReentrantLock>> personQueue;
