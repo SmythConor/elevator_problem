@@ -58,9 +58,7 @@ class Elevator implements Runnable {
 		int arrivalFloor = person.getArrivalFloor();
 		int destinationFloor = person.getDestinationFloor();
 
-		int directionRep = destinationFloor - arrivalFloor;
-
-		Direction direction = (directionRep > 0) ? Direction.DOWN : Direction.UP;
+		Direction direction = getDirection(destinationFloor, arrivalFloor);
 
 		return this.direction == direction;
 	}
@@ -69,6 +67,10 @@ class Elevator implements Runnable {
 	 * General purpose arrival function to pick up a person
 	 */
 	public void personArrived() {
+		if(personQueue.size() == 0) {
+			return;
+		}
+
 		Map<Person, ReentrantLock> personWithLock = personQueue.peek();
 
 		/* Get the person and lock objects */
@@ -82,29 +84,33 @@ class Elevator implements Runnable {
 		if(!ourDirection(person)) {
 			personLock.unlock();
 
-			//wait again
+			return;
 		} else if(!canFit(person)) {
 			/* Check this elevator has room */
 			personLock.unlock();
 
-			//wait again
+			return;
 		} else {
 			/* Get the arrival and destination floors */
 			int arrivalFloor = person.getArrivalFloor();
 			int destinationFloor = person.getDestinationFloor();
 
-			/* Wait for the number of floors */
-			int waitTime = Math.abs(arrivalFloor - destinationFloor);
+			if(currentFloor != destinationFloor) {
+				Direction directionToPerson = getDirection(currentFloor, destinationFloor);
+				int dir = Math.abs(currentFloor - destinationFloor);
 
-			try {
-				/* Sleep thread */
-				Thread.sleep(waitTime);
-			} catch(InterruptedException e) {
-				e.printStackTrace();
+				move(directionToPerson, dir);
 			}
 
-			personLock.unlock();
+			Direction direction = getDirection(destinationFloor, arrivalFloor);
+
+			/* Wait for the number of floors */
+			int noFloors = Math.abs(arrivalFloor - destinationFloor);
+
+			move(direction, noFloors);
+
 			personQueue.remove(personWithLock);
+			System.out.println(personQueue.size());
 			Logger.log(person);
 		}
 	}
@@ -113,13 +119,36 @@ class Elevator implements Runnable {
 	 * {@inheritdoc}
 	 */
 	@Override
-		public void run() {
+		public synchronized void run() {
 			while(true) {
-				//sleep while waiting for signal
 				while(personQueue.isEmpty()) {
-					//wait();
+					try {
+						wait();
+					} catch(InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
-				//personArrived();
+
+				personArrived();
+				System.out.println(currentFloor);
 			}
 		}
+
+	private void move(Direction direction, int noFloors) {
+		for(int i = 0; i < noFloors; i++) {
+			try {
+				Thread.sleep(100);
+			} catch(InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			currentFloor = direction == Direction.UP ? currentFloor + 1 : currentFloor - 1;
+		}
+	}
+
+	private Direction getDirection(int destinationFloor, int arrivalFloor) {
+		int directionRep = destinationFloor - arrivalFloor;
+
+		return (directionRep > 0) ? Direction.DOWN : Direction.UP;
+	}
 }

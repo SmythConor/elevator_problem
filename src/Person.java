@@ -11,9 +11,10 @@ class Person implements Runnable {
 	public Person() {
 		this.personId = Generator.generateId();
 		this.weight = Generator.generateWeight();
-		this.arrivalTime = Generator.generateTime();
+		this.arrivalTime = Generator.generateArrivalTime();
 		this.arrivalFloor = Generator.generateFloor();
 		this.destinationFloor = Generator.generateFloor(arrivalFloor);
+		this.luggageWeight = Generator.generateWeight();
 	}
 
 	/**
@@ -161,11 +162,5 @@ class Person implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			wait(100);
-		} catch(InterruptedException e) {
-		System.out.println("Person");
-			e.printStackTrace();
-		}
 	}
 }

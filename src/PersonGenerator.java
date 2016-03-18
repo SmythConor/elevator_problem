@@ -17,16 +17,16 @@ class PersonGenerator implements Runnable {
 	}
 
 	@Override
-	public void run() {
+	public synchronized void run() {
 		while(true) {
 			if(personQueue.size() > 0) {
-				//notify thread pool somehow
+				notifyAll();
 			}
 
 			Person person = new Person();
 
 			Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
-			personMap.put(p, new ReentrantLock());
+			personMap.put(person, new ReentrantLock());
 
 			personQueue.add(personMap);
 

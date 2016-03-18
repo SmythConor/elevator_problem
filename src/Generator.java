@@ -8,6 +8,7 @@ import java.util.Random;
 class Generator {
 	private static final Integer MAX_PERSON = 5000;
 	private static final Integer MAX_FLOOR = 10;
+	private static Long startTime = System.currentTimeMillis();
 
 	/**
 	 * Generate random number between 1 and 100
@@ -65,6 +66,10 @@ class Generator {
 	 */
 	public static Integer generateTime() {
 		return generateRandomNumber(2000);
+	}
+
+	public static Integer generateArrivalTime() {
+		return new Long(System.currentTimeMillis() - startTime).intValue();
 	}
 
 	/**
