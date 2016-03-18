@@ -63,3 +63,4 @@ fabric.properties
 
 #personal
 *.sh
+*.swp
