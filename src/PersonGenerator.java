@@ -18,12 +18,15 @@ class PersonGenerator implements Runnable {
 
 	@Override
 	public synchronized void run() {
-		while(true) {
+	int i = 0;
+		while(i < 10) {
 			if(personQueue.size() > 0) {
-				notifyAll();
+				System.out.println("Notified ye prick");
+				notify();
 			}
 
 			Person person = new Person();
+			System.out.println(person);
 
 			Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
 			personMap.put(person, new ReentrantLock());
@@ -38,6 +41,8 @@ class PersonGenerator implements Runnable {
 				System.out.println("Person generater");
 				e.printStackTrace();
 			}
+
+			i++;
 		}
 	}
 }

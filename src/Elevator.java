@@ -67,6 +67,7 @@ class Elevator implements Runnable {
 	 * General purpose arrival function to pick up a person
 	 */
 	public void personArrived() {
+		/* Shouldn't need this */
 		if(personQueue.size() == 0) {
 			return;
 		}
@@ -80,39 +81,32 @@ class Elevator implements Runnable {
 		/* Attempt to get a lock on the person */
 		personLock.tryLock();
 
-		/* Check if the person is going this elevators direction */
-		if(!ourDirection(person)) {
+		/* Check if the person is going this elevators direction and the person can fit */
+		//if(!ourDirection(person) || !canFit(person)) {
 			personLock.unlock();
-
-			return;
-		} else if(!canFit(person)) {
-			/* Check this elevator has room */
-			personLock.unlock();
-
-			return;
-		} else {
+		//} else {
 			/* Get the arrival and destination floors */
 			int arrivalFloor = person.getArrivalFloor();
 			int destinationFloor = person.getDestinationFloor();
 
 			if(currentFloor != destinationFloor) {
-				Direction directionToPerson = getDirection(currentFloor, destinationFloor);
-				int dir = Math.abs(currentFloor - destinationFloor);
+				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
+				int dir = Math.abs(currentFloor - arrivalFloor);
 
 				move(directionToPerson, dir);
 			}
 
-			Direction direction = getDirection(destinationFloor, arrivalFloor);
+			this.direction = getDirection(arrivalFloor, destinationFloor);
 
 			/* Wait for the number of floors */
 			int noFloors = Math.abs(arrivalFloor - destinationFloor);
 
-			move(direction, noFloors);
+			move(this.direction, noFloors);
 
 			personQueue.remove(personWithLock);
-			System.out.println(personQueue.size());
 			Logger.log(person);
-		}
+			System.out.println("Current floor: " + currentFloor);
+		//}
 	}
 
 	/**
@@ -122,6 +116,7 @@ class Elevator implements Runnable {
 		public synchronized void run() {
 			while(true) {
 				while(personQueue.isEmpty()) {
+					System.out.println(personQueue.size());
 					try {
 						wait();
 					} catch(InterruptedException e) {
@@ -130,24 +125,36 @@ class Elevator implements Runnable {
 				}
 
 				personArrived();
-				System.out.println(currentFloor);
 			}
 		}
 
+	/**
+	 * General ues function for moving position
+	 * @param direction the direction to move
+	 * @param noFloors the number of floors to move
+	 */
 	private void move(Direction direction, int noFloors) {
-		for(int i = 0; i < noFloors; i++) {
+		//System.out.println("Dir: " + direction + " noFloors: " + noFloors);
+		for(int i = 0; i <= noFloors; i++) {
 			try {
 				Thread.sleep(100);
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
+			//System.out.println(currentFloor);
 
-			currentFloor = direction == Direction.UP ? currentFloor + 1 : currentFloor - 1;
+			currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
 		}
 	}
 
-	private Direction getDirection(int destinationFloor, int arrivalFloor) {
-		int directionRep = destinationFloor - arrivalFloor;
+	/**
+	 * Get the direction from x to y
+	 * @param x the starting point
+	 * @param y the end point
+	 * @return Direction 
+	 */
+	private Direction getDirection(int x, int y) {
+		int directionRep = x - y;
 
 		return (directionRep > 0) ? Direction.DOWN : Direction.UP;
 	}
