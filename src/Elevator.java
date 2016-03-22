@@ -158,4 +158,20 @@ class Elevator implements Runnable {
 
 		return (directionRep > 0) ? Direction.DOWN : Direction.UP;
 	}
+
+	private boolean continueDirection(){
+
+		for (Map<Person, ReentrantLock> pair : personQueue) {
+			for(Person p : pair.keySet()){
+				if((p.getDestinationFloor()-currentFloor > 0) && (Direction.UP == direction)){
+					return true;
+				}
+				else if((p.getDestinationFloor()-currentFloor < 0) && (Direction.DOWN == direction)){
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
 }
