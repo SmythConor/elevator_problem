@@ -26,7 +26,7 @@ class PersonGenerator implements Runnable {
 			}
 
 			Person person = new Person();
-			System.out.println(person);
+			//System.out.println(person);
 
 			Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
 			personMap.put(person, new ReentrantLock());
@@ -38,7 +38,7 @@ class PersonGenerator implements Runnable {
 			try {
 				Thread.sleep(wait);
 			} catch(InterruptedException e) {
-				System.out.println("Person generater");
+				System.out.println("Person generator");
 				e.printStackTrace();
 			}
 

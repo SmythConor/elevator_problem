@@ -123,7 +123,7 @@ class Elevator implements Runnable {
 						e.printStackTrace();
 					}
 				}
-
+				System.out.println("Another person arrived, new size: "+personQueue.size());
 				personArrived();
 			}
 		}
@@ -137,7 +137,7 @@ class Elevator implements Runnable {
 		//System.out.println("Dir: " + direction + " noFloors: " + noFloors);
 		for(int i = 0; i <= noFloors; i++) {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1000);
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
