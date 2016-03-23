@@ -32,6 +32,7 @@ class PersonGenerator implements Runnable {
 				personMap.put(person, new ReentrantLock());
 
 				personQueue.add(personMap);
+				System.out.println("new person queuing, size of queue is "+personQueue.size());
 				notifyAll();
 			}
 
@@ -39,7 +40,8 @@ class PersonGenerator implements Runnable {
 
 
 			try {
-				Thread.sleep(wait);
+				//Thread.sleep(wait);
+				wait();
 			} catch (InterruptedException e) {
 				System.out.println("Person generator");
 				e.printStackTrace();

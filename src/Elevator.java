@@ -1,12 +1,6 @@
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Elevator class for handling the elevator movement etc
@@ -16,7 +10,7 @@ import java.util.ArrayList;
 class Elevator implements Runnable {
 	private final Double MAX_WEIGHT = 1320.0;
 
-	private List<Person> persons;
+	private List<Person> peopleInElevator;
 	private Queue<Map<Person, ReentrantLock>> personQueue;
 	private Integer currentFloor;
 	private Double currentWeight;
@@ -30,7 +24,7 @@ class Elevator implements Runnable {
 	public Elevator(Queue<Map<Person, ReentrantLock>> personQueue) {
 		System.out.println("elevator created");
 		this.personQueue = personQueue;
-		persons = new ArrayList<Person>();
+		peopleInElevator = new ArrayList<Person>();
 
 		currentFloor = 0;
 		currentWeight = 0.0;
@@ -67,18 +61,25 @@ class Elevator implements Runnable {
 	/**
 	 * General purpose arrival function to pick up a person
 	 */
-	public void personArrived() {
-		System.out.println("personarrived() in elevator");
+	public void personArrived(Person person) {
+		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
 
 		/* Shouldn't need this */
 		if(personQueue.size() == 0) {
 			return;
 		}
 
-		Map<Person, ReentrantLock> personWithLock = personQueue.peek();
+		Map<Person, ReentrantLock> personWithLock = null;
+
+		for(Map<Person, ReentrantLock> p : personQueue){
+			if(p.keySet().contains(person)) {
+				personWithLock = p;
+				break;
+			}
+		}
 
 		/* Get the person and lock objects */
-		Person person = (personWithLock.keySet()).toArray(new Person[0])[0];
+		//Person person = (personWithLock.keySet()).toArray(new Person[0])[0];
 		Lock personLock = personWithLock.get(person);
 
 		/* Attempt to get a lock on the person */
@@ -95,14 +96,15 @@ class Elevator implements Runnable {
 			if(currentFloor != destinationFloor) {
 				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
 
-				move(directionToPerson);
+				//move(directionToPerson);
 			}
 
 			this.direction = getDirection(arrivalFloor, destinationFloor);
 
-			move(this.direction);
+			//move(this.direction);
 
 			personQueue.remove(personWithLock);
+			peopleInElevator.add(person);
 			Logger.log(person);
 			System.out.println("Person #"+person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 		//}
@@ -125,8 +127,38 @@ class Elevator implements Runnable {
 						e.printStackTrace();
 					}
 				}
-				personArrived();
-				System.out.println("Another person arrived, new size: "+personQueue.size());
+
+				if(personOnCurrentFloor()){
+					Person p = getPersonOnCurrentFloor();
+					System.out.println("Person #" +p.getPersonId()+" is on this floor");
+					personArrived(p);
+				}
+
+				if(peopleInElevator.size() > 0){
+					LinkedList<Person> peopleToRemoveAtThisFloor = new LinkedList<>();
+
+					for(Person p : peopleInElevator){
+						if(p.getDestinationFloor() == currentFloor) {
+							peopleToRemoveAtThisFloor.add(p);
+						}
+					}
+
+					for(Person p : peopleToRemoveAtThisFloor){
+						peopleInElevator.remove(p);
+						System.out.println("Person #"+p.getPersonId()+" arrived at their floor");
+					}
+				}
+
+				Map<Person, ReentrantLock> topPersonAndLock = personQueue.peek();
+				Person topPerson =(topPersonAndLock.keySet()).toArray(new Person[0])[0];
+				Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
+
+				if(continueDirection())
+					move(direction);
+				else if(peopleInElevator.isEmpty())
+					move(directOfTopPerson);
+				else
+					move(getDirection(currentFloor, peopleInElevator.get(0).getArrivalFloor()));
 			}
 		}
 
@@ -141,7 +173,6 @@ class Elevator implements Runnable {
 		} catch(InterruptedException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Elevator is at Floor:"+currentFloor);
 		currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
 	}
 
