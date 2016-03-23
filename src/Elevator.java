@@ -28,6 +28,7 @@ class Elevator implements Runnable {
 	 * @param personQueue the queue of people arriving
 	 */
 	public Elevator(Queue<Map<Person, ReentrantLock>> personQueue) {
+		System.out.println("elevator created");
 		this.personQueue = personQueue;
 		persons = new ArrayList<Person>();
 
@@ -67,6 +68,8 @@ class Elevator implements Runnable {
 	 * General purpose arrival function to pick up a person
 	 */
 	public void personArrived() {
+		System.out.println("personarrived() in elevator");
+
 		/* Shouldn't need this */
 		if(personQueue.size() == 0) {
 			return;
@@ -91,21 +94,17 @@ class Elevator implements Runnable {
 
 			if(currentFloor != destinationFloor) {
 				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
-				int dir = Math.abs(currentFloor - arrivalFloor);
 
-				move(directionToPerson, dir);
+				move(directionToPerson);
 			}
 
 			this.direction = getDirection(arrivalFloor, destinationFloor);
 
-			/* Wait for the number of floors */
-			int noFloors = Math.abs(arrivalFloor - destinationFloor);
-
-			move(this.direction, noFloors);
+			move(this.direction);
 
 			personQueue.remove(personWithLock);
 			Logger.log(person);
-			System.out.println("Current floor: " + currentFloor);
+			System.out.println("Person #"+person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 		//}
 	}
 
@@ -114,37 +113,36 @@ class Elevator implements Runnable {
 	 */
 	@Override
 		public synchronized void run() {
+			System.out.println("elevator thread begins");
 			while(true) {
 				while(personQueue.isEmpty()) {
-					System.out.println(personQueue.size());
+					System.out.println(personQueue.size()+" No one waiting for lifts...");
+					notifyAll();
+
 					try {
 						wait();
 					} catch(InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
-				System.out.println("Another person arrived, new size: "+personQueue.size());
 				personArrived();
+				System.out.println("Another person arrived, new size: "+personQueue.size());
 			}
 		}
 
 	/**
 	 * General ues function for moving position
 	 * @param direction the direction to move
-	 * @param noFloors the number of floors to move
 	 */
-	private void move(Direction direction, int noFloors) {
-		//System.out.println("Dir: " + direction + " noFloors: " + noFloors);
-		for(int i = 0; i <= noFloors; i++) {
-			try {
-				Thread.sleep(1000);
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-			//System.out.println(currentFloor);
-
-			currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
+	private void move(Direction direction) {
+		//System.out.println("Dir: " + direction + " noFloors: " + noFloors)
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException e) {
+			e.printStackTrace();
 		}
+		System.out.println("Elevator is at Floor:"+currentFloor);
+		currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
 	}
 
 	/**
@@ -172,6 +170,16 @@ class Elevator implements Runnable {
 			}
 		}
 
+		return false;
+	}
+
+	private boolean personOnCurrentFloor(){
+		for (Map<Person, ReentrantLock> pair : personQueue) {
+			for(Person p : pair.keySet()){
+				if(p.getArrivalFloor() == currentFloor)
+					return true;
+			}
+		}
 		return false;
 	}
 }

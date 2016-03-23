@@ -18,31 +18,32 @@ class PersonGenerator implements Runnable {
 
 	@Override
 	public synchronized void run() {
-	int i = 0;
-		while(i < 10) {
-			if(personQueue.size() > 0) {
-				System.out.println("Notified ye prick");
-				notify();
+		while(true) {
+			while (personQueue.size() < 10) {
+				if (personQueue.size() > 0) {
+					//System.out.println("Notified ye prick");
+					notifyAll();
+				}
+
+				Person person = new Person();
+				//System.out.println(person);
+
+				Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
+				personMap.put(person, new ReentrantLock());
+
+				personQueue.add(personMap);
+				notifyAll();
 			}
-
-			Person person = new Person();
-			//System.out.println(person);
-
-			Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
-			personMap.put(person, new ReentrantLock());
-
-			personQueue.add(personMap);
 
 			int wait = Generator.generateTime();
 
+
 			try {
 				Thread.sleep(wait);
-			} catch(InterruptedException e) {
+			} catch (InterruptedException e) {
 				System.out.println("Person generator");
 				e.printStackTrace();
 			}
-
-			i++;
 		}
 	}
 }
