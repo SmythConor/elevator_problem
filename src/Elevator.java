@@ -182,4 +182,14 @@ class Elevator implements Runnable {
 		}
 		return false;
 	}
+
+	private Person getPersonOnCurrentFloor(){
+		for (Map<Person, ReentrantLock> pair : personQueue) {
+			for(Person p : pair.keySet()){
+				if(p.getArrivalFloor() == currentFloor)
+					return p;
+			}
+		}
+		return null;
+	}
 }
