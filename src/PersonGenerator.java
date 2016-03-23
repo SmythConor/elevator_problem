@@ -10,9 +10,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class PersonGenerator implements Runnable {
-	private Queue<Map<Person, ReentrantLock>> personQueue;
+	//private Queue<Map<Person, ReentrantLock>> personQueue;
+	private PersonQueue personQueue;
 
-	public PersonGenerator(Queue<Map<Person, ReentrantLock>> personQueue) {
+	public PersonGenerator(PersonQueue personQueue) {
 		this.personQueue = personQueue;
 	}
 
@@ -20,18 +21,20 @@ class PersonGenerator implements Runnable {
 	public synchronized void run() {
 	int i = 0;
 		while(i < 10) {
-			if(personQueue.size() > 0) {
+			if(!personQueue.isEmpty()) {
 				System.out.println("Notified ye prick");
+				synchronized(personQueue) {
 				notify();
+				}
 			}
 
 			Person person = new Person();
-			//System.out.println(person);
+			System.out.println(person);
 
-			Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
-			personMap.put(person, new ReentrantLock());
+			//Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
+			//personMap.put(person, new ReentrantLock());
 
-			personQueue.add(personMap);
+			personQueue.add(person);
 
 			int wait = Generator.generateTime();
 

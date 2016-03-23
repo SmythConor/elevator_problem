@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -17,7 +18,8 @@ class Elevator implements Runnable {
 	private final Double MAX_WEIGHT = 1320.0;
 
 	private List<Person> persons;
-	private Queue<Map<Person, ReentrantLock>> personQueue;
+	//private Queue<Map<Person, ReentrantLock>> personQueue;
+	private PersonQueue personQueue;
 	private Integer currentFloor;
 	private Double currentWeight;
 
@@ -27,7 +29,7 @@ class Elevator implements Runnable {
 	 * Contructor to shared person queue
 	 * @param personQueue the queue of people arriving
 	 */
-	public Elevator(Queue<Map<Person, ReentrantLock>> personQueue) {
+	public Elevator(PersonQueue personQueue) {
 		this.personQueue = personQueue;
 		persons = new ArrayList<Person>();
 
@@ -66,9 +68,9 @@ class Elevator implements Runnable {
 	/**
 	 * General purpose arrival function to pick up a person
 	 */
-	public void personArrived() {
+	public void personArrived() throws InterruptedException {
 		/* Shouldn't need this */
-		if(personQueue.size() == 0) {
+		if(personQueue.isEmpty()) {
 			return;
 		}
 
@@ -79,12 +81,15 @@ class Elevator implements Runnable {
 		Lock personLock = personWithLock.get(person);
 
 		/* Attempt to get a lock on the person */
-		personLock.tryLock();
+		if(personLock.tryLock(100, TimeUnit.MILLISECONDS)) {
+			System.out.println(person.getPersonId() + " locked by  " + Thread.currentThread().getId());
+			personQueue.remove(personWithLock);
+			//System.out.println("Picked up: " + person);
 
-		/* Check if the person is going this elevators direction and the person can fit */
-		//if(!ourDirection(person) || !canFit(person)) {
-			personLock.unlock();
-		//} else {
+			/* Check if the person is going this elevators direction and the person can fit */
+			//if(!ourDirection(person) || !canFit(person)) {
+			//personLock.unlock();
+			//} else {
 			/* Get the arrival and destination floors */
 			int arrivalFloor = person.getArrivalFloor();
 			int destinationFloor = person.getDestinationFloor();
@@ -101,11 +106,12 @@ class Elevator implements Runnable {
 			/* Wait for the number of floors */
 			int noFloors = Math.abs(arrivalFloor - destinationFloor);
 
+			System.out.println("Before move: " + currentFloor);
 			move(this.direction, noFloors);
 
-			personQueue.remove(personWithLock);
 			Logger.log(person);
 			System.out.println("Current floor: " + currentFloor);
+		}
 		//}
 	}
 
@@ -116,15 +122,19 @@ class Elevator implements Runnable {
 		public synchronized void run() {
 			while(true) {
 				while(personQueue.isEmpty()) {
-					System.out.println(personQueue.size());
 					try {
-						wait();
+						synchronized(personQueue) {
+							wait();
+						}
 					} catch(InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
-				System.out.println("Another person arrived, new size: "+personQueue.size());
-				personArrived();
+
+				//System.out.println("Another person arrived, new size: "+personQueue.size());
+				try {
+					personArrived();
+				} catch(InterruptedException e) {}
 			}
 		}
 
@@ -135,9 +145,9 @@ class Elevator implements Runnable {
 	 */
 	private void move(Direction direction, int noFloors) {
 		//System.out.println("Dir: " + direction + " noFloors: " + noFloors);
-		for(int i = 0; i <= noFloors; i++) {
+		for(int i = 0; i < noFloors; i++) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
