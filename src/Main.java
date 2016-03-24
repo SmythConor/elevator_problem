@@ -1,9 +1,3 @@
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
@@ -34,6 +28,9 @@ class Main {
 		}
 	}
 
+	/**
+	 * Static function to start the person generator
+	 */
 	private static void startPersonGenerator() {
 		personQueue = new PersonQueue();
 
