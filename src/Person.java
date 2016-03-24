@@ -1,11 +1,14 @@
+/**
+ * Person class for representing a person
+ * @author Conor Smyth 12452382 <conor.smyth39@mail.dcu.ie>
+ * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
+ */
 class Person implements Runnable {
 	private Integer personId;
 	private Double weight;
 	private Integer arrivalTime;
 	private Integer arrivalFloor;
 	private Integer destinationFloor;
-
-	private Boolean hasLuggage;
 	private Double luggageWeight;
 
 	public Person(boolean[] occupiedFloors) {
@@ -161,6 +164,5 @@ class Person implements Runnable {
 	}
 
 	@Override
-	public void run() {
-	}
+	public void run() {}
 }
