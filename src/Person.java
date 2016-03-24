@@ -1,18 +1,21 @@
+/**
+ * Person class for representing a person
+ * @author Conor Smyth 12452382 <conor.smyth39@mail.dcu.ie>
+ * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
+ */
 class Person implements Runnable {
 	private Integer personId;
 	private Double weight;
 	private Integer arrivalTime;
 	private Integer arrivalFloor;
 	private Integer destinationFloor;
-
-	private Boolean hasLuggage;
 	private Double luggageWeight;
 
-	public Person() {
+	public Person(boolean[] occupiedFloors) {
 		this.personId = Generator.generateId();
 		this.weight = Generator.generateWeight();
 		this.arrivalTime = Generator.generateArrivalTime();
-		this.arrivalFloor = Generator.generateFloor();
+		this.arrivalFloor = Generator.generateFloor(occupiedFloors);
 		this.destinationFloor = Generator.generateFloor(arrivalFloor);
 		this.luggageWeight = Generator.generateWeight();
 	}
@@ -88,20 +91,6 @@ class Person implements Runnable {
 	}
 
 	/**
-	 * @return the hasLuggage
-	 */
-	public Boolean getHasLuggage() {
-		return hasLuggage;
-	}
-
-	/**
-	 * @param hasLuggage the hasLuggage to set
-	 */
-	public void setHasLuggage(Boolean hasLuggage) {
-		this.hasLuggage = hasLuggage;
-	}
-
-	/**
 	 * @return the luggageWeight
 	 */
 	public Double getLuggageWeight() {
@@ -147,11 +136,6 @@ class Person implements Runnable {
 			builder.append(destinationFloor);
 			builder.append(", ");
 		}
-		if(hasLuggage != null) {
-			builder.append("hasLuggage=");
-			builder.append(hasLuggage);
-			builder.append(", ");
-		}
 		if(luggageWeight != null) {
 			builder.append("luggageWeight=");
 			builder.append(luggageWeight);
@@ -161,6 +145,5 @@ class Person implements Runnable {
 	}
 
 	@Override
-	public void run() {
-	}
+	public void run() {}
 }

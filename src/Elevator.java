@@ -1,13 +1,7 @@
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Elevator class for handling the elevator movement etc
@@ -17,11 +11,12 @@ import java.util.ArrayList;
 class Elevator implements Runnable {
 	private final Double MAX_WEIGHT = 1320.0;
 
-	private List<Person> persons;
-	//private Queue<Map<Person, ReentrantLock>> personQueue;
+	private List<Person> peopleInElevator;
 	private PersonQueue personQueue;
 	private Integer currentFloor;
 	private Double currentWeight;
+	private Person buttonPress;
+
 
 	private Direction direction;
 
@@ -31,11 +26,11 @@ class Elevator implements Runnable {
 	 */
 	public Elevator(PersonQueue personQueue) {
 		this.personQueue = personQueue;
-		persons = new ArrayList<Person>();
+		peopleInElevator = new ArrayList<Person>();
 
 		currentFloor = 0;
 		currentWeight = 0.0;
-
+		buttonPress = null;
 		direction = Direction.UP;
 	}
 
@@ -67,94 +62,156 @@ class Elevator implements Runnable {
 
 	/**
 	 * General purpose arrival function to pick up a person
+	 * @param person the person to pick up
 	 */
-	public void personArrived() throws InterruptedException {
-		/* Shouldn't need this */
-		if(personQueue.isEmpty()) {
-			return;
-		}
-
-		Map<Person, ReentrantLock> personWithLock = personQueue.peek();
-
-		/* Get the person and lock objects */
-		Person person = (personWithLock.keySet()).toArray(new Person[0])[0];
+	public void personArrived(Person person) {
+		/* Get the person from the queue */
+		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
 		Lock personLock = personWithLock.get(person);
 
 		/* Attempt to get a lock on the person */
-		if(personLock.tryLock(100, TimeUnit.MILLISECONDS)) {
-			System.out.println(person.getPersonId() + " locked by  " + Thread.currentThread().getId());
-			personQueue.remove(personWithLock);
-			//System.out.println("Picked up: " + person);
+		if(personLock.tryLock()) {
 
-			/* Check if the person is going this elevators direction and the person can fit */
-			//if(!ourDirection(person) || !canFit(person)) {
-			//personLock.unlock();
-			//} else {
-			/* Get the arrival and destination floors */
-			int arrivalFloor = person.getArrivalFloor();
-			int destinationFloor = person.getDestinationFloor();
-
-			if(currentFloor != destinationFloor) {
-				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
-				int dir = Math.abs(currentFloor - arrivalFloor);
-
-				move(directionToPerson, dir);
+			/* Check if the person can fit */
+			if(!canFit(person)) {
+				personLock.unlock();
 			}
+			else {
+				/* Remove the person from the queue */
+				personQueue.remove(personWithLock);
 
-			this.direction = getDirection(arrivalFloor, destinationFloor);
+				/* Mark the floor as being empty */
+				personQueue.setEmptyFloor(person.getArrivalFloor());
 
-			/* Wait for the number of floors */
-			int noFloors = Math.abs(arrivalFloor - destinationFloor);
+				/* Add person to this elevators list */
+				peopleInElevator.add(person);
 
-			System.out.println("Before move: " + currentFloor);
-			move(this.direction, noFloors);
-
-			Logger.log(person);
-			System.out.println("Current floor: " + currentFloor);
+				/* Add the persons weight to the total */
+				currentWeight += (person.getWeight() + person.getLuggageWeight());
+			}
 		}
-		//}
+	}
+
+	/**
+	* If the person was already locked
+	*/
+	public void lockedPersonArrived(Person person) {
+		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
+
+		personQueue.remove(personWithLock);
+		personQueue.setEmptyFloor(person.getArrivalFloor());
+		peopleInElevator.add(person);
+		currentWeight += (person.getWeight() + person.getLuggageWeight());
+
+		Logger.log(person);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	@Override
-		public synchronized void run() {
-			while(true) {
-				while(personQueue.isEmpty()) {
-					try {
-						synchronized(personQueue) {
-							wait();
-						}
-					} catch(InterruptedException e) {
-						e.printStackTrace();
+	public synchronized void run() {
+		while(true) {
+			/* Check is the queue empty */
+			while(personQueue.isEmpty()) {
+				/* notify that queue is empty */
+				personQueue.notifyOthers();
+				try {
+					/* Wait for the queue to fill up again */
+					personQueue.sleepNow();
+				} catch(InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+			/* Check is there a person on the floor */
+			if(isPersonOnCurrentFloor(currentFloor)){
+				/* Get the person on the current floor */
+				Person p = getPersonOnCurrentFloor(currentFloor);
+
+				/* Check if we locked this person */
+				if(p.equals(buttonPress)) {
+					buttonPress = null;
+
+					/* Add the person to the elevator */
+					lockedPersonArrived(p);
+				} else if(ourDirection(p)) {
+					/* Lock the person and add to the elevator */
+					personArrived(p);
+				}
+			}
+
+			/* Check if people have to be removed from the elevator and remove them */
+			if(peopleInElevator.size() > 0) {
+				LinkedList<Person> peopleToRemoveAtThisFloor = new LinkedList<>();
+
+				for(Person p : peopleInElevator){
+					if(p.getDestinationFloor() == currentFloor) {
+						peopleToRemoveAtThisFloor.add(p);
 					}
 				}
 
-				//System.out.println("Another person arrived, new size: "+personQueue.size());
+				for(Person p : peopleToRemoveAtThisFloor){
+					/* Remove the person from the list */
+					peopleInElevator.remove(p);
+
+					/* Remove the persons weight */
+					currentWeight -= (p.getWeight() + p.getLuggageWeight());
+				}
+			}
+
+			/* Check if the elevator is on the way to someone */
+			if(buttonPress != null) {
+				move(getDirection(currentFloor, buttonPress.getArrivalFloor()));
+			} else if (!peopleInElevator.isEmpty()) {
+				/* Check where to continue moving */
+				int dest = peopleInElevator.get(0).getDestinationFloor();
+				Direction dir = getDirection(currentFloor, dest);
+
+				/* Move in that direction */
+				move(dir);
+			} else if(!personQueue.isEmpty()) {
+				/* get the person waiting longest */
+				Map<Person, ReentrantLock> topPersonAndLock = personQueue.getOldestButtonPress();
+
+				/* If there's nobody, do nothing */
+				if(topPersonAndLock != null) {
+					Person topPerson = (topPersonAndLock.keySet()).toArray(new Person[0])[0];
+					Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
+
+					/* set the button presser as the new person */
+					buttonPress = topPerson;
+
+					/* Move to the person */
+					move(directOfTopPerson);
+				} else {
+					try {
+						personQueue.sleepNow();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			} else {
 				try {
-					personArrived();
-				} catch(InterruptedException e) {}
+					personQueue.sleepNow();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
+	}
 
 	/**
 	 * General ues function for moving position
 	 * @param direction the direction to move
-	 * @param noFloors the number of floors to move
 	 */
-	private void move(Direction direction, int noFloors) {
-		//System.out.println("Dir: " + direction + " noFloors: " + noFloors);
-		for(int i = 0; i < noFloors; i++) {
-			try {
-				Thread.sleep(100);
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-			//System.out.println(currentFloor);
-
-			currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
+	private void move(Direction direction) {
+		try {
+			Thread.sleep(1000);
+		} catch(InterruptedException e) {
+			e.printStackTrace();
 		}
+		currentFloor = direction.equals(Direction.UP) ? currentFloor + 1 : currentFloor - 1;
 	}
 
 	/**
@@ -167,5 +224,23 @@ class Elevator implements Runnable {
 		int directionRep = x - y;
 
 		return (directionRep > 0) ? Direction.DOWN : Direction.UP;
+	}
+
+	/**
+	 * Check is there a person on this floor
+	 * @param currentFloor the current floor
+	 * @return true if there is person on this floor
+	 */
+	private boolean isPersonOnCurrentFloor(int currentFloor){
+		return personQueue.isPersonOnCurrentFloor(currentFloor);
+	}
+
+	/**
+	 * Check for a person on current floor
+	 * @param currentFloor the current floor
+	 * @return the person on this floor
+	 */
+	private Person getPersonOnCurrentFloor(int currentFloor){
+		return personQueue.getPersonOnCurrentFloor(currentFloor);
 	}
 }
