@@ -91,20 +91,6 @@ class Person implements Runnable {
 	}
 
 	/**
-	 * @return the hasLuggage
-	 */
-	public Boolean getHasLuggage() {
-		return hasLuggage;
-	}
-
-	/**
-	 * @param hasLuggage the hasLuggage to set
-	 */
-	public void setHasLuggage(Boolean hasLuggage) {
-		this.hasLuggage = hasLuggage;
-	}
-
-	/**
 	 * @return the luggageWeight
 	 */
 	public Double getLuggageWeight() {
@@ -148,11 +134,6 @@ class Person implements Runnable {
 		if(destinationFloor != null) {
 			builder.append("destinationFloor=");
 			builder.append(destinationFloor);
-			builder.append(", ");
-		}
-		if(hasLuggage != null) {
-			builder.append("hasLuggage=");
-			builder.append(hasLuggage);
 			builder.append(", ");
 		}
 		if(luggageWeight != null) {
