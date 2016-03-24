@@ -12,12 +12,15 @@ class PersonQueue {
     private Queue<Map<Person, ReentrantLock>> personQueue;
     private boolean[] occupiedFloors = new boolean[10];
     private long generatorID;
+		private Logger logger;
 
     public PersonQueue() {
         for(int i=1; i<occupiedFloors.length;i++)
             occupiedFloors[i] = false;
 
         personQueue = new ConcurrentLinkedQueue<>();
+
+				logger = new Logger();
     }
 
     public synchronized boolean add(Person person) {
@@ -123,4 +126,12 @@ class PersonQueue {
     public void setEmptyFloor(int i){
         occupiedFloors[i] = false;
     }
+
+		public void log(Person person) {
+			logger.log(person);
+		}
+
+		public void closeLogger() {
+			logger.close();
+		}
 }

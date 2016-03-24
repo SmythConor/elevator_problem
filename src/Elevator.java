@@ -64,7 +64,7 @@ class Elevator implements Runnable {
 	 * General purpose arrival function to pick up a person
 	 */
 	public void personArrived(Person person) {
-		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
+		//System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
 
 		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
 
@@ -79,25 +79,25 @@ class Elevator implements Runnable {
 				System.out.println("Elevator" + Thread.currentThread().getId() + ": Ignored the person beacause of no room");
 			}
 			else {
-				System.out.println("Elevator" + Thread.currentThread().getId() + ": Person Lock Successful & they fit");
+				//System.out.println("Elevator" + Thread.currentThread().getId() + ": Person Lock Successful & they fit");
 				personQueue.remove(personWithLock);
 				personQueue.setEmptyFloor(person.getArrivalFloor());
 				peopleInElevator.add(person);
 				currentWeight += (person.getWeight() + person.getLuggageWeight());
 
-				Logger.log(person);
-				System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+				//Logger.log(person);
+				//System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 			}
 		}
-		else
-			System.out.println("Elevator "+ Thread.currentThread().getId() + ": Person Lock Fail");
+		//else
+			//System.out.println("Elevator "+ Thread.currentThread().getId() + ": Person Lock Fail");
 	}
 
 	public void LockedPersonArrived(Person person) {
-		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
+		//System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
 
 		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
-		System.out.println("Elevator"+ Thread.currentThread().getId() + ": Picked up the person who press the button for them");
+		//System.out.println("Elevator"+ Thread.currentThread().getId() + ": Picked up the person who press the button for them");
 
 			personQueue.remove(personWithLock);
 			personQueue.setEmptyFloor(person.getArrivalFloor());
@@ -105,7 +105,7 @@ class Elevator implements Runnable {
 			currentWeight += (person.getWeight() + person.getLuggageWeight());
 
 			Logger.log(person);
-			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+			//System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 	}
 
 	/**
@@ -126,7 +126,7 @@ class Elevator implements Runnable {
 
 				if(isPersonOnCurrentFloor(currentFloor)){
 					Person p = getPersonOnCurrentFloor(currentFloor);
-					System.out.println("Person #" +p.getPersonId()+" is on this floor");
+					//System.out.println("Person #" +p.getPersonId()+" is on this floor");
 					if(p.equals(buttonPress)) {
 						buttonPress = null;
 						LockedPersonArrived(p);
@@ -134,7 +134,7 @@ class Elevator implements Runnable {
 					else if(ourDirection(p))
 						personArrived(p);
 					else{
-						System.out.println("Elevator "+ Thread.currentThread().getId() + ": just ignored a person not going my way");
+						//System.out.println("Elevator "+ Thread.currentThread().getId() + ": just ignored a person not going my way");
 					}
 				}
 
@@ -150,7 +150,7 @@ class Elevator implements Runnable {
 					for(Person p : peopleToRemoveAtThisFloor){
 						peopleInElevator.remove(p);
 						currentWeight -= (p.getWeight() + p.getLuggageWeight());
-						System.out.println("Person #"+p.getPersonId()+" arrived at their floor");
+						//System.out.println("Person #"+p.getPersonId()+" arrived at their floor");
 					}
 				}
 
@@ -172,7 +172,7 @@ class Elevator implements Runnable {
 						move(directOfTopPerson);
 					}
 					else{
-						System.out.println("Elevator "+ Thread.currentThread().getId() + ": Everyone in PeopleQueue were Locked");
+						//System.out.println("Elevator "+ Thread.currentThread().getId() + ": Everyone in PeopleQueue were Locked");
 						try {
 							personQueue.sleepNow();
 						} catch (InterruptedException e) {
@@ -188,7 +188,7 @@ class Elevator implements Runnable {
 					}
 				}
 
-				System.out.println("Elevator "+ Thread.currentThread().getId() +"  is now on Floor #"+currentFloor);
+				//System.out.println("Elevator "+ Thread.currentThread().getId() +"  is now on Floor #"+currentFloor);
 			}
 		}
 

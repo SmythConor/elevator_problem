@@ -15,36 +15,35 @@ class PersonGenerator implements Runnable {
 
 
 	public PersonGenerator(PersonQueue personQueue) {
-        this.personQueue = personQueue;
+		this.personQueue = personQueue;
 	}
 
 	@Override
-	public synchronized void run() {
-		while(true) {
-			while (personQueue.size() < 10) {
-				if (personQueue.size() > 0) {
+		public synchronized void run() {
+			while(true) {
+				while (personQueue.size() < 10) {
+					if (personQueue.size() > 0) {
+						personQueue.notifyOthers();
+					}
+
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					Person person = new Person(personQueue.getOccupiedFloors());
+
+					personQueue.setOccupiedFloor(person.getArrivalFloor());
+					personQueue.add(person);
 					personQueue.notifyOthers();
 				}
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Person person = new Person(personQueue.getOccupiedFloors());
-				System.out.println(person);
-
-                personQueue.setOccupiedFloor(person.getArrivalFloor());
-				personQueue.add(person);
-				personQueue.notifyOthers();
-			}
-
-			try {
-				personQueue.sleepNow();
-			} catch (InterruptedException e) {
-				System.out.println("Person generator");
-				e.printStackTrace();
+				try {
+					personQueue.sleepNow();
+				} catch (InterruptedException e) {
+					System.out.println("Person generator");
+					e.printStackTrace();
+				}
 			}
 		}
-	}
 }
