@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
  * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class Main {
-	private static Queue<Map<Person, ReentrantLock>> personQueue;
+	private static PersonQueue personQueue;
 	private final static int ELEVATOR_COUNT = 1;//Generator.generateRandomNumber();
 
 	public static void main(String[] args) {
@@ -31,7 +31,7 @@ class Main {
 	}
 
 	private static void startPersonGenerator() {
-		personQueue = new ConcurrentLinkedQueue<>();
+		personQueue = new PersonQueue();
 
 		PersonGenerator personGenerator = new PersonGenerator(personQueue);
 

@@ -11,7 +11,7 @@ class Elevator implements Runnable {
 	private final Double MAX_WEIGHT = 1320.0;
 
 	private List<Person> peopleInElevator;
-	private Queue<Map<Person, ReentrantLock>> personQueue;
+	private PersonQueue personQueue;
 	private Integer currentFloor;
 	private Double currentWeight;
 
@@ -21,7 +21,7 @@ class Elevator implements Runnable {
 	 * Contructor to shared person queue
 	 * @param personQueue the queue of people arriving
 	 */
-	public Elevator(Queue<Map<Person, ReentrantLock>> personQueue) {
+	public Elevator(PersonQueue personQueue) {
 		System.out.println("elevator created");
 		this.personQueue = personQueue;
 		peopleInElevator = new ArrayList<Person>();
@@ -69,14 +69,7 @@ class Elevator implements Runnable {
 			return;
 		}
 
-		Map<Person, ReentrantLock> personWithLock = null;
-
-		for(Map<Person, ReentrantLock> p : personQueue){
-			if(p.keySet().contains(person)) {
-				personWithLock = p;
-				break;
-			}
-		}
+		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
 
 		/* Get the person and lock objects */
 		//Person person = (personWithLock.keySet()).toArray(new Person[0])[0];
@@ -128,8 +121,8 @@ class Elevator implements Runnable {
 					}
 				}
 
-				if(personOnCurrentFloor()){
-					Person p = getPersonOnCurrentFloor();
+				if(isPersonOnCurrentFloor(currentFloor)){
+					Person p = getPersonOnCurrentFloor(currentFloor);
 					System.out.println("Person #" +p.getPersonId()+" is on this floor");
 					personArrived(p);
 				}
@@ -153,7 +146,7 @@ class Elevator implements Runnable {
 				Person topPerson =(topPersonAndLock.keySet()).toArray(new Person[0])[0];
 				Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
 
-				if(continueDirection())
+				if(continueDirection(currentFloor, direction))
 					move(direction);
 				else if(peopleInElevator.isEmpty())
 					move(directOfTopPerson);
@@ -188,39 +181,15 @@ class Elevator implements Runnable {
 		return (directionRep > 0) ? Direction.DOWN : Direction.UP;
 	}
 
-	private boolean continueDirection(){
-
-		for (Map<Person, ReentrantLock> pair : personQueue) {
-			for(Person p : pair.keySet()){
-				if((p.getDestinationFloor()-currentFloor > 0) && (Direction.UP == direction)){
-					return true;
-				}
-				else if((p.getDestinationFloor()-currentFloor < 0) && (Direction.DOWN == direction)){
-					return true;
-				}
-			}
-		}
-
-		return false;
+	private boolean continueDirection(int currentFloor, Direction direction){
+		return personQueue.continueDirection(currentFloor, direction);
 	}
 
-	private boolean personOnCurrentFloor(){
-		for (Map<Person, ReentrantLock> pair : personQueue) {
-			for(Person p : pair.keySet()){
-				if(p.getArrivalFloor() == currentFloor)
-					return true;
-			}
-		}
-		return false;
+	private boolean isPersonOnCurrentFloor(int currentFloor){
+		return personQueue.isPersonOnCurrentFloor(currentFloor);
 	}
 
-	private Person getPersonOnCurrentFloor(){
-		for (Map<Person, ReentrantLock> pair : personQueue) {
-			for(Person p : pair.keySet()){
-				if(p.getArrivalFloor() == currentFloor)
-					return p;
-			}
-		}
-		return null;
+	private Person getPersonOnCurrentFloor(int currentFloor){
+		return personQueue.getPersonOnCurrentFloor(currentFloor);
 	}
 }

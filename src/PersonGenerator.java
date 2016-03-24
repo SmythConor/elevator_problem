@@ -10,9 +10,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Phil Brennan 12759011 <philip.brennan36@mail.dcu.ie>
  */
 class PersonGenerator implements Runnable {
-	private Queue<Map<Person, ReentrantLock>> personQueue;
+	private PersonQueue personQueue;
 
-	public PersonGenerator(Queue<Map<Person, ReentrantLock>> personQueue) {
+	public PersonGenerator(PersonQueue personQueue) {
 		this.personQueue = personQueue;
 	}
 
@@ -28,10 +28,7 @@ class PersonGenerator implements Runnable {
 				Person person = new Person();
 				//System.out.println(person);
 
-				Map<Person, ReentrantLock> personMap = new ConcurrentHashMap<>();
-				personMap.put(person, new ReentrantLock());
-
-				personQueue.add(personMap);
+				personQueue.add(person);
 				System.out.println("new person queuing, size of queue is "+personQueue.size());
 				notifyAll();
 			}
