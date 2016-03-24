@@ -72,62 +72,37 @@ class Elevator implements Runnable {
 
 		/* Attempt to get a lock on the person */
 		if(personLock.tryLock()) {
-			System.out.println("Elevator"+ Thread.currentThread().getId() + ": Person Lock Successful");
+
 			/* Check if the person is going this elevators direction and the person can fit */
-			//if(!ourDirection(person) || !canFit(person)) {
-			personLock.unlock();
-			//} else {
-			/* Get the arrival and destination floors */
-			int arrivalFloor = person.getArrivalFloor();
-			int destinationFloor = person.getDestinationFloor();
-
-			if (currentFloor != destinationFloor) {
-				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
-
-				//move(directionToPerson);
+			if(!canFit(person)) {
+				personLock.unlock();
+				System.out.println("Elevator" + Thread.currentThread().getId() + ": Ignored the person beacause of no room");
 			}
+			else {
+				System.out.println("Elevator" + Thread.currentThread().getId() + ": Person Lock Successful & they fit");
+				personQueue.remove(personWithLock);
+				personQueue.setEmptyFloor(person.getArrivalFloor());
+				peopleInElevator.add(person);
+				currentWeight += (person.getWeight() + person.getLuggageWeight());
 
-			this.direction = getDirection(arrivalFloor, destinationFloor);
-
-			//move(this.direction);
-
-			personQueue.remove(personWithLock);
-			personQueue.setEmptyFloor(person.getArrivalFloor());
-			peopleInElevator.add(person);
-
-			Logger.log(person);
-			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+				Logger.log(person);
+				System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+			}
 		}
 		else
 			System.out.println("Elevator "+ Thread.currentThread().getId() + ": Person Lock Fail");
-		//}
 	}
 
 	public void LockedPersonArrived(Person person) {
 		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
 
 		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
-
-		Lock personLock = personWithLock.get(person);
-
-		/* Attempt to get a lock on the person */
-
-			System.out.println("Elevator"+ Thread.currentThread().getId() + ": Already had Lock");
-			/* Check if the person is going this elevators direction and the person can fit */
-			//if(!ourDirection(person) || !canFit(person)) {
-//			personLock.unlock();
-			//} else {
-			/* Get the arrival and destination floors */
-
-
-
-
-
-			//move(this.direction);
+		System.out.println("Elevator"+ Thread.currentThread().getId() + ": Picked up the person who press the button for them");
 
 			personQueue.remove(personWithLock);
 			personQueue.setEmptyFloor(person.getArrivalFloor());
 			peopleInElevator.add(person);
+			currentWeight += (person.getWeight() + person.getLuggageWeight());
 
 			Logger.log(person);
 			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
@@ -141,9 +116,7 @@ class Elevator implements Runnable {
 			System.out.println("elevator thread begins");
 			while(true) {
 				while(personQueue.isEmpty()) {
-					System.out.println(personQueue.size()+" No one waiting for lifts...");
 					personQueue.notifyOthers();
-
 					try {
 						personQueue.sleepNow();
 					} catch(InterruptedException e) {
@@ -158,7 +131,7 @@ class Elevator implements Runnable {
 						buttonPress = null;
 						LockedPersonArrived(p);
 					}
-					else if(getDirection(currentFloor, p.getDestinationFloor()).equals(direction))
+					else if(ourDirection(p))
 						personArrived(p);
 					else{
 						System.out.println("Elevator "+ Thread.currentThread().getId() + ": just ignored a person not going my way");
@@ -176,6 +149,7 @@ class Elevator implements Runnable {
 
 					for(Person p : peopleToRemoveAtThisFloor){
 						peopleInElevator.remove(p);
+						currentWeight -= (p.getWeight() + p.getLuggageWeight());
 						System.out.println("Person #"+p.getPersonId()+" arrived at their floor");
 					}
 				}
@@ -193,7 +167,7 @@ class Elevator implements Runnable {
 					if(topPersonAndLock != null){
 						Person topPerson = (topPersonAndLock.keySet()).toArray(new Person[0])[0];
 						Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
-						System.out.println("Elevator "+ Thread.currentThread().getId() + ": is going to Floor #"+topPerson.getArrivalFloor());
+						//System.out.println("Elevator "+ Thread.currentThread().getId() + ": is going to Floor #"+topPerson.getArrivalFloor());
 						buttonPress = topPerson;
 						move(directOfTopPerson);
 					}

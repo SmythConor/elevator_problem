@@ -23,7 +23,6 @@ class PersonGenerator implements Runnable {
 		while(true) {
 			while (personQueue.size() < 10) {
 				if (personQueue.size() > 0) {
-					//System.out.println("Notified ye prick");
 					personQueue.notifyOthers();
 				}
 
@@ -37,15 +36,10 @@ class PersonGenerator implements Runnable {
 
                 personQueue.setOccupiedFloor(person.getArrivalFloor());
 				personQueue.add(person);
-				//System.out.println("new person queuing, size of queue is "+personQueue.size());
 				personQueue.notifyOthers();
 			}
 
-			int wait = Generator.generateTime();
-
-
 			try {
-				//Thread.sleep(wait);
 				personQueue.sleepNow();
 			} catch (InterruptedException e) {
 				System.out.println("Person generator");

@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 class PersonQueue {
     private Queue<Map<Person, ReentrantLock>> personQueue;
     private boolean[] occupiedFloors = new boolean[10];
+    private long generatorID;
 
     public PersonQueue() {
         for(int i=1; i<occupiedFloors.length;i++)
