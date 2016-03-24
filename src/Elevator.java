@@ -14,6 +14,8 @@ class Elevator implements Runnable {
 	private PersonQueue personQueue;
 	private Integer currentFloor;
 	private Double currentWeight;
+	private Person buttonPress;
+
 
 	private Direction direction;
 
@@ -28,7 +30,7 @@ class Elevator implements Runnable {
 
 		currentFloor = 0;
 		currentWeight = 0.0;
-
+		buttonPress = null;
 		direction = Direction.UP;
 	}
 
@@ -70,8 +72,8 @@ class Elevator implements Runnable {
 
 		/* Attempt to get a lock on the person */
 		if(personLock.tryLock()) {
-			System.out.println("Elevator: Person Lock Successful");
-		/* Check if the person is going this elevators direction and the person can fit */
+			System.out.println("Elevator"+ Thread.currentThread().getId() + ": Person Lock Successful");
+			/* Check if the person is going this elevators direction and the person can fit */
 			//if(!ourDirection(person) || !canFit(person)) {
 			personLock.unlock();
 			//} else {
@@ -97,8 +99,38 @@ class Elevator implements Runnable {
 			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 		}
 		else
-			System.out.println("Elevator: Person Lock Fail");
+			System.out.println("Elevator "+ Thread.currentThread().getId() + ": Person Lock Fail");
 		//}
+	}
+
+	public void LockedPersonArrived(Person person) {
+		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
+
+		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
+
+		Lock personLock = personWithLock.get(person);
+
+		/* Attempt to get a lock on the person */
+
+			System.out.println("Elevator"+ Thread.currentThread().getId() + ": Already had Lock");
+			/* Check if the person is going this elevators direction and the person can fit */
+			//if(!ourDirection(person) || !canFit(person)) {
+//			personLock.unlock();
+			//} else {
+			/* Get the arrival and destination floors */
+
+
+
+
+
+			//move(this.direction);
+
+			personQueue.remove(personWithLock);
+			personQueue.setEmptyFloor(person.getArrivalFloor());
+			peopleInElevator.add(person);
+
+			Logger.log(person);
+			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
 	}
 
 	/**
@@ -122,7 +154,15 @@ class Elevator implements Runnable {
 				if(isPersonOnCurrentFloor(currentFloor)){
 					Person p = getPersonOnCurrentFloor(currentFloor);
 					System.out.println("Person #" +p.getPersonId()+" is on this floor");
-					personArrived(p);
+					if(p.equals(buttonPress)) {
+						buttonPress = null;
+						LockedPersonArrived(p);
+					}
+					else if(getDirection(currentFloor, p.getDestinationFloor()).equals(direction))
+						personArrived(p);
+					else{
+						System.out.println("Elevator "+ Thread.currentThread().getId() + ": just ignored a person not going my way");
+					}
 				}
 
 				if(peopleInElevator.size() > 0){
@@ -140,16 +180,31 @@ class Elevator implements Runnable {
 					}
 				}
 
-				if (!peopleInElevator.isEmpty()){
+				if(buttonPress != null){
+					move(getDirection(currentFloor, buttonPress.getArrivalFloor()));
+				}
+				else if (!peopleInElevator.isEmpty()){
 					int dest = peopleInElevator.get(0).getDestinationFloor();
 					Direction dir = getDirection(currentFloor, dest);
 					move(dir);
 				}
 				else if(!personQueue.isEmpty()) {
-					Map<Person, ReentrantLock> topPersonAndLock = personQueue.peek();
-					Person topPerson = (topPersonAndLock.keySet()).toArray(new Person[0])[0];
-					Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
-					move(directOfTopPerson);
+					Map<Person, ReentrantLock> topPersonAndLock = personQueue.getOldestButtonPress();
+					if(topPersonAndLock != null){
+						Person topPerson = (topPersonAndLock.keySet()).toArray(new Person[0])[0];
+						Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
+						System.out.println("Elevator "+ Thread.currentThread().getId() + ": is going to Floor #"+topPerson.getArrivalFloor());
+						buttonPress = topPerson;
+						move(directOfTopPerson);
+					}
+					else{
+						System.out.println("Elevator "+ Thread.currentThread().getId() + ": Everyone in PeopleQueue were Locked");
+						try {
+							personQueue.sleepNow();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 				else{
 					try {

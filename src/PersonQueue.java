@@ -2,6 +2,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import java.util.concurrent.Executors;
@@ -55,11 +56,24 @@ class PersonQueue {
         return null;
     }
 
+    public synchronized Map<Person, ReentrantLock> getOldestButtonPress(){
+        for(Map<Person, ReentrantLock> pair : personQueue){
+            for(Person p : pair.keySet()){
+                if(pair.get(p).tryLock())
+                    return pair;
+            }
+        }
+        return null;
+    }
+
     public synchronized boolean isPersonOnCurrentFloor(int currentFloor){
         for (Map<Person, ReentrantLock> pair : personQueue) {
             for(Person p : pair.keySet()){
+                Lock personLock = pair.get(p);
+
                 if(p.getArrivalFloor() == currentFloor)
-                    return true;
+                    if(personLock.tryLock())
+                        return true;
             }
         }
         return false;

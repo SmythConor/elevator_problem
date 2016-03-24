@@ -2,6 +2,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -20,13 +21,18 @@ class PersonGenerator implements Runnable {
 	@Override
 	public synchronized void run() {
 		while(true) {
-			while (personQueue.size() < 2) {
+			while (personQueue.size() < 10) {
 				if (personQueue.size() > 0) {
 					//System.out.println("Notified ye prick");
 					personQueue.notifyOthers();
 				}
 
-				Person person = new Person(personQueue.getOccupiedFloors());
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Person person = new Person(personQueue.getOccupiedFloors());
 				System.out.println(person);
 
                 personQueue.setOccupiedFloor(person.getArrivalFloor());
