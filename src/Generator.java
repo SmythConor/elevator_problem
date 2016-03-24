@@ -76,8 +76,17 @@ class Generator {
 	 * Generate a random floor
 	 * @return random floor between 0 and MAX_FLOOR
 	 */
-	public static Integer generateFloor() {
-		return generateRandomNumber(MAX_FLOOR);
+	public static Integer generateFloor(boolean[] occupiedFloors) {
+		int i;
+
+		do{
+			i = generateRandomNumber(MAX_FLOOR);
+			i = i-1;
+		} while(occupiedFloors[i]);
+
+		occupiedFloors[i] = true;
+
+		return i;
 	}
 
 	/**

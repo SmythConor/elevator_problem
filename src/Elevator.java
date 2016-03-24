@@ -64,29 +64,22 @@ class Elevator implements Runnable {
 	public void personArrived(Person person) {
 		System.out.println("Person #"+person.getPersonId()+" got into the in elevator");
 
-		/* Shouldn't need this */
-		if(personQueue.size() == 0) {
-			return;
-		}
-
 		Map<Person, ReentrantLock> personWithLock = personQueue.getPersonWithLock(person);
 
-		/* Get the person and lock objects */
-		//Person person = (personWithLock.keySet()).toArray(new Person[0])[0];
 		Lock personLock = personWithLock.get(person);
 
 		/* Attempt to get a lock on the person */
-		personLock.tryLock();
-
+		if(personLock.tryLock()) {
+			System.out.println("Elevator: Person Lock Successful");
 		/* Check if the person is going this elevators direction and the person can fit */
-		//if(!ourDirection(person) || !canFit(person)) {
+			//if(!ourDirection(person) || !canFit(person)) {
 			personLock.unlock();
-		//} else {
+			//} else {
 			/* Get the arrival and destination floors */
 			int arrivalFloor = person.getArrivalFloor();
 			int destinationFloor = person.getDestinationFloor();
 
-			if(currentFloor != destinationFloor) {
+			if (currentFloor != destinationFloor) {
 				Direction directionToPerson = getDirection(currentFloor, arrivalFloor);
 
 				//move(directionToPerson);
@@ -97,9 +90,14 @@ class Elevator implements Runnable {
 			//move(this.direction);
 
 			personQueue.remove(personWithLock);
+			personQueue.setEmptyFloor(person.getArrivalFloor());
 			peopleInElevator.add(person);
+
 			Logger.log(person);
-			System.out.println("Person #"+person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+			System.out.println("Person #" + person.getPersonId() + " entered on floor: " + person.getArrivalFloor());
+		}
+		else
+			System.out.println("Elevator: Person Lock Fail");
 		//}
 	}
 
@@ -112,10 +110,10 @@ class Elevator implements Runnable {
 			while(true) {
 				while(personQueue.isEmpty()) {
 					System.out.println(personQueue.size()+" No one waiting for lifts...");
-					notifyAll();
+					personQueue.notifyOthers();
 
 					try {
-						wait();
+						personQueue.sleepNow();
 					} catch(InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -142,16 +140,26 @@ class Elevator implements Runnable {
 					}
 				}
 
-				Map<Person, ReentrantLock> topPersonAndLock = personQueue.peek();
-				Person topPerson =(topPersonAndLock.keySet()).toArray(new Person[0])[0];
-				Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
-
-				if(continueDirection(currentFloor, direction))
-					move(direction);
-				else if(peopleInElevator.isEmpty())
+				if (!peopleInElevator.isEmpty()){
+					int dest = peopleInElevator.get(0).getDestinationFloor();
+					Direction dir = getDirection(currentFloor, dest);
+					move(dir);
+				}
+				else if(!personQueue.isEmpty()) {
+					Map<Person, ReentrantLock> topPersonAndLock = personQueue.peek();
+					Person topPerson = (topPersonAndLock.keySet()).toArray(new Person[0])[0];
+					Direction directOfTopPerson = getDirection(currentFloor, topPerson.getArrivalFloor());
 					move(directOfTopPerson);
-				else
-					move(getDirection(currentFloor, peopleInElevator.get(0).getArrivalFloor()));
+				}
+				else{
+					try {
+						personQueue.sleepNow();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+
+				System.out.println("Elevator "+ Thread.currentThread().getId() +"  is now on Floor #"+currentFloor);
 			}
 		}
 
@@ -160,7 +168,6 @@ class Elevator implements Runnable {
 	 * @param direction the direction to move
 	 */
 	private void move(Direction direction) {
-		//System.out.println("Dir: " + direction + " noFloors: " + noFloors)
 		try {
 			Thread.sleep(1000);
 		} catch(InterruptedException e) {

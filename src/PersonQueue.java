@@ -9,8 +9,12 @@ import java.util.concurrent.ExecutorService;
 
 class PersonQueue {
     private Queue<Map<Person, ReentrantLock>> personQueue;
+    private boolean[] occupiedFloors = new boolean[10];
 
     public PersonQueue() {
+        for(int i=1; i<occupiedFloors.length;i++)
+            occupiedFloors[i] = false;
+
         personQueue = new ConcurrentLinkedQueue<>();
     }
 
@@ -83,5 +87,25 @@ class PersonQueue {
             }
         }
         return null;
+    }
+
+    public synchronized void notifyOthers(){
+        notifyAll();
+    }
+
+    public synchronized void sleepNow() throws InterruptedException {
+        wait();
+    }
+
+    public boolean[] getOccupiedFloors(){
+        return occupiedFloors;
+    }
+
+    public void setOccupiedFloor(int i){
+        occupiedFloors[i] = true;
+    }
+
+    public void setEmptyFloor(int i){
+        occupiedFloors[i] = false;
     }
 }

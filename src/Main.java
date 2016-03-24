@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
  */
 class Main {
 	private static PersonQueue personQueue;
-	private final static int ELEVATOR_COUNT = 1;//Generator.generateRandomNumber();
+	private final static int ELEVATOR_COUNT = 2;//Generator.generateRandomNumber();
 
 	public static void main(String[] args) {
 		startPersonGenerator();

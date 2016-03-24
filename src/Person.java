@@ -8,11 +8,11 @@ class Person implements Runnable {
 	private Boolean hasLuggage;
 	private Double luggageWeight;
 
-	public Person() {
+	public Person(boolean[] occupiedFloors) {
 		this.personId = Generator.generateId();
 		this.weight = Generator.generateWeight();
 		this.arrivalTime = Generator.generateArrivalTime();
-		this.arrivalFloor = Generator.generateFloor();
+		this.arrivalFloor = Generator.generateFloor(occupiedFloors);
 		this.destinationFloor = Generator.generateFloor(arrivalFloor);
 		this.luggageWeight = Generator.generateWeight();
 	}

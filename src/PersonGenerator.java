@@ -12,25 +12,27 @@ import java.util.concurrent.locks.ReentrantLock;
 class PersonGenerator implements Runnable {
 	private PersonQueue personQueue;
 
+
 	public PersonGenerator(PersonQueue personQueue) {
-		this.personQueue = personQueue;
+        this.personQueue = personQueue;
 	}
 
 	@Override
 	public synchronized void run() {
 		while(true) {
-			while (personQueue.size() < 10) {
+			while (personQueue.size() < 2) {
 				if (personQueue.size() > 0) {
 					//System.out.println("Notified ye prick");
-					notifyAll();
+					personQueue.notifyOthers();
 				}
 
-				Person person = new Person();
-				//System.out.println(person);
+				Person person = new Person(personQueue.getOccupiedFloors());
+				System.out.println(person);
 
+                personQueue.setOccupiedFloor(person.getArrivalFloor());
 				personQueue.add(person);
-				System.out.println("new person queuing, size of queue is "+personQueue.size());
-				notifyAll();
+				//System.out.println("new person queuing, size of queue is "+personQueue.size());
+				personQueue.notifyOthers();
 			}
 
 			int wait = Generator.generateTime();
@@ -38,7 +40,7 @@ class PersonGenerator implements Runnable {
 
 			try {
 				//Thread.sleep(wait);
-				wait();
+				personQueue.sleepNow();
 			} catch (InterruptedException e) {
 				System.out.println("Person generator");
 				e.printStackTrace();
